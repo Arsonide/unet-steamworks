@@ -8,7 +8,7 @@ using System;
 using Steamworks;
  
 
-public class SteamNetworkManager : NetworkManager
+public class SteamNetworkManager : MonoBehaviour
 {
     public const int MAX_USERS = 4;
     public const string GAME_ID = "spacewave-unet-p2p-example"; // Unique identifier for matchmaking so we don't match up with other Spacewar games

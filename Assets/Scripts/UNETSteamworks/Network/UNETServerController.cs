@@ -67,7 +67,7 @@ public class UNETServerController {
         // Start UNET server
         NetworkServer.Configure(SteamNetworkManager.hostTopology);
         NetworkServer.dontListen = true;
-        SteamNetworkManager.Instance.StartServer();
+        NetworkServer.Listen(0);
 
         NetworkServer.SpawnObjects();
 
