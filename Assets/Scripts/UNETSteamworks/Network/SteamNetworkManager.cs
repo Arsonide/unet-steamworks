@@ -44,6 +44,9 @@ public class SteamNetworkManager : MonoBehaviour
     private Callback<LobbyChatUpdate_t> m_LobbyChatUpdate;
     private CallResult<LobbyMatchList_t> m_LobbyMatchList;
 
+    protected event Action<CSteamID> OnPlayerJoin;
+    protected event Action<CSteamID> OnPlayerLeave;
+
     private static HostTopology m_hostTopology = null;
     public static HostTopology hostTopology
     {
@@ -255,18 +258,25 @@ public class SteamNetworkManager : MonoBehaviour
 
     void OnLobbyChatUpdate(LobbyChatUpdate_t pCallback)
     {
-        if (pCallback.m_rgfChatMemberStateChange == (uint) EChatMemberStateChange.k_EChatMemberStateChangeLeft && pCallback.m_ulSteamIDLobby == steamLobbyId.m_SteamID)
+        CSteamID changed = new CSteamID(pCallback.m_ulSteamIDUserChanged);
+
+        if (pCallback.m_rgfChatMemberStateChange == (uint)EChatMemberStateChange.k_EChatMemberStateChangeEntered && pCallback.m_ulSteamIDLobby == steamLobbyId.m_SteamID)
         {
-            Debug.Log("A client has disconnected from the UNET server");
+            if (OnPlayerJoin != null)
+                OnPlayerJoin(changed);
+        }
+        else if (pCallback.m_rgfChatMemberStateChange == (uint) EChatMemberStateChange.k_EChatMemberStateChangeLeft && pCallback.m_ulSteamIDLobby == steamLobbyId.m_SteamID)
+        {
+            if (OnPlayerLeave != null)
+                OnPlayerLeave(changed);
 
             // user left lobby
-            var userId = new CSteamID(pCallback.m_ulSteamIDUserChanged);
             if (UNETServerController.IsHostingServer())
             {
-                UNETServerController.RemoveConnection(userId);
+                UNETServerController.RemoveConnection(changed);
             }
 
-            SteamNetworking.CloseP2PSessionWithUser(userId);
+            SteamNetworking.CloseP2PSessionWithUser(changed);
         }
     }
 
@@ -370,8 +380,15 @@ public class SteamNetworkManager : MonoBehaviour
         }
 
         steamLobbyId = new CSteamID(pCallback.m_ulSteamIDLobby);
+        int numMembers = SteamMatchmaking.GetNumLobbyMembers(steamLobbyId);
 
-        Debug.Log("Connected to Steam lobby");
+        for (int i = 0; i < numMembers; ++i)
+        {
+            if (OnPlayerJoin != null)
+                OnPlayerJoin(SteamMatchmaking.GetLobbyMemberByIndex(steamLobbyId, i));
+        }
+
+        Debug.Log("Connected to Steam lobby with " + numMembers + " members");
         lobbyConnectionState = SessionConnectionState.CONNECTED;
 
         var hostUserId = SteamMatchmaking.GetLobbyOwner(steamLobbyId);
