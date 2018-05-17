@@ -195,7 +195,7 @@ public class SteamNetworkManager : MonoBehaviour
 
             for (int i = 0; i < numMembers; i++) 
             {
-                var member = SteamMatchmaking.GetLobbyMemberByIndex (steamLobbyId, i);
+                CSteamID member = SteamMatchmaking.GetLobbyMemberByIndex (steamLobbyId, i);
 
                 if (member.m_SteamID == steamUser.m_SteamID)
                 {
@@ -343,7 +343,7 @@ public class SteamNetworkManager : MonoBehaviour
 
         //Note: call SteamMatchmaking.AddRequestLobbyList* before RequestLobbyList to filter results by some criteria
         SteamMatchmaking.AddRequestLobbyListStringFilter("game", GAME_ID, ELobbyComparison.k_ELobbyComparisonEqual);
-        var call = SteamMatchmaking.RequestLobbyList();
+        SteamAPICall_t call = SteamMatchmaking.RequestLobbyList();
         m_LobbyMatchList.Set(call, OnLobbyMatchList);
     }
 
@@ -365,7 +365,7 @@ public class SteamNetworkManager : MonoBehaviour
             // If multiple lobbies are returned we can iterate over them with SteamMatchmaking.GetLobbyByIndex and choose the "best" one
             // In this case we are just joining the first one
             Debug.Log("Joining lobby");
-            var lobby = SteamMatchmaking.GetLobbyByIndex(0);
+            CSteamID lobby = SteamMatchmaking.GetLobbyByIndex(0);
             JoinLobby(lobby);
         }
 
@@ -391,8 +391,8 @@ public class SteamNetworkManager : MonoBehaviour
         Debug.Log("Connected to Steam lobby with " + numMembers + " members");
         lobbyConnectionState = SessionConnectionState.CONNECTED;
 
-        var hostUserId = SteamMatchmaking.GetLobbyOwner(steamLobbyId);
-        var me = SteamUser.GetSteamID();
+        CSteamID hostUserId = SteamMatchmaking.GetLobbyOwner(steamLobbyId);
+        CSteamID me = SteamUser.GetSteamID();
         if (hostUserId.m_SteamID == me.m_SteamID)
         {
             SteamMatchmaking.SetLobbyData(steamLobbyId, "game", GAME_ID);
@@ -409,7 +409,7 @@ public class SteamNetworkManager : MonoBehaviour
         
     IEnumerator RequestP2PConnectionWithHost()
     {
-        var hostUserId = SteamMatchmaking.GetLobbyOwner (steamLobbyId);
+        CSteamID hostUserId = SteamMatchmaking.GetLobbyOwner (steamLobbyId);
 
         //send packet to request connection to host via Steam's NAT punch or relay servers
         Debug.Log("Sending packet to request P2P connection");
@@ -473,7 +473,7 @@ public class SteamNetworkManager : MonoBehaviour
 
         RegisterNetworkPrefabs();
 
-        var conn = myClient.connection;
+        NetworkConnection conn = myClient.connection;
         if (conn != null)
         {
             ClientScene.Ready(conn);
